@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Literal, Dict
 
 import librosa as lb
 import numpy as np
@@ -135,12 +135,12 @@ class NisqaModel:
         self.model.to(self.device)
         self.model.eval()
 
-    def predict(self, waveform: torch.Tensor, sample_rate: int) -> dict[str, float]:
+    def predict(self, waveform: np.array, sample_rate: int) -> Dict[str, float]:
         """Prediction for waveform input
 
         Parameters
         ----------
-        waveform : torch.Tensor
+        waveform : numpy.array
             Input waveform
         sample_rate : int
             Sample rate of input waveform
@@ -174,12 +174,6 @@ class NisqaModel:
         return ret
 
     def _extract_feature(self, waveform, sample_rate):
-        if self.args["ms_sr"]:
-            transform = torchaudio.transforms.Resample(
-                orig_freq=sample_rate, new_freq=self.args["ms_sr"]
-            )
-
-            waveform = transform(waveform)
 
         spec = get_librosa_melspec(
             waveform,
@@ -236,12 +230,12 @@ def get_librosa_melspec(
     # Calc spec
     if ms_channel is not None:
         if len(waveform.shape) > 1:
-            y = waveform[ms_channel].numpy()
+            y = waveform[ms_channel]
     else:
         if waveform.shape[0] > 1:
-            y = waveform.mean(dim=0, keepdim=True)[0].numpy()
+            y = waveform.mean(axis=0)
         else:
-            y = waveform[0].numpy()
+            y = waveform[0]
 
     hop_length = int(sr * hop_length)
     win_length = int(sr * win_length)
